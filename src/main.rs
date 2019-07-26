@@ -8,7 +8,19 @@ use minifb::{Key, Scale, WindowOptions, Window};
 const WIDTH: usize = 200;
 const HEIGHT: usize = 100;
 
+fn hit_sphere(center: Vector, radius: f64, ray: &Ray) -> bool {
+    let oc = ray.origin - center;
+    let a = ray.direction.dot(ray.direction);
+    let b = 2.0 * oc.dot(ray.direction);
+    let c = oc.dot(oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
+}
+
 fn color(ray: &Ray) -> Vector {
+    if hit_sphere(Vector::new(0.0, 0.0, -1.0), 0.5, ray) {
+        return Vector::new(1.0, 0.0, 0.0);
+    }
     let direction = ray.direction.unit();
     let t = 0.5 * (direction.y + 1.0);
     (1.0 - t) * Vector::new(1.0, 1.0, 1.0) + t * Vector::new(0.5, 0.7, 1.0)
