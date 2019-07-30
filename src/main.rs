@@ -17,13 +17,25 @@ const WIDTH: usize = 200;
 const HEIGHT: usize = 100;
 const SAMPLES: usize = 100;
 
+fn random_in_unit_sphere() -> Vector {
+    let mut rng = rand::thread_rng();
+
+    loop {
+        let p = 2.0 * Vector::new(
+            rng.gen::<f64>(),
+            rng.gen::<f64>(),
+            rng.gen::<f64>()
+        ) - Vector::new(1.0, 1.0, 1.0);
+        if p.squared_length() < 1.0 {
+            return p;
+        }
+    }
+}
+
 fn color(ray: &Ray, world: &HitableList) -> Vector {
-    if let Some(record) = world.hit(ray, 0.0, std::f64::MAX) {
-        0.5 * Vector::new(
-            record.normal.x + 1.0,
-            record.normal.y + 1.0,
-            record.normal.z + 1.0
-        )
+    if let Some(record) = world.hit(ray, 0.001, std::f64::MAX) {
+        let target = record.p + record.normal + random_in_unit_sphere();
+        0.5 * color(&Ray::new(record.p, target - record.p), world)
     } else {
         let direction = ray.direction.unit();
         let t = 0.5 * (direction.y + 1.0);
@@ -60,6 +72,7 @@ fn main() {
                 col += color(&r, &world);
             }
             col /= SAMPLES as f64;
+            col = Vector::new(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
             *i = u32::from_be_bytes([
                 0x00,
                 (col.x * 255.99) as u8,
