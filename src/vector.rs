@@ -12,8 +12,12 @@ impl Vector {
         Vector { x, y, z }
     }
 
-    pub fn zero() -> Vector {
+    pub fn zeros() -> Vector {
         Vector { x: 0.0, y: 0.0, z: 0.0 }
+    }
+
+    pub fn ones() -> Vector {
+        Vector { x: 1.0, y: 1.0, z: 1.0 }
     }
 
     pub fn unit(self) -> Vector {
