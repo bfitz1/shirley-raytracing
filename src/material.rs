@@ -20,6 +20,24 @@ fn reflect(v: Vector, n: Vector) -> Vector {
     v - 2.0 * v.dot(n) * n
 }
 
+fn refract(v: Vector, n: Vector, ni_over_nt: f64) -> Option<Vector> {
+    let uv = v.unit();
+    let dt = uv.dot(n);
+    let discriminant = 1.0 - ni_over_nt*ni_over_nt*(1.0 - dt*dt);
+
+    if discriminant > 0.0 {
+        Some(ni_over_nt * (uv - dt*n) - discriminant.sqrt()*n)
+    } else {
+        None
+    }
+}
+
+fn schlick(cosine: f64, refractive_index: f64) -> f64 {
+    let r0 = (1.0 - refractive_index) / (1.0 + refractive_index);
+    let r0 = r0 * r0;
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+}
+
 #[derive(Copy, Clone)]
 pub struct Scatter {
     pub attenuation: Vector,
@@ -62,9 +80,49 @@ impl Metal {
 }
 
 #[derive(Copy, Clone)]
+pub struct Dielectric {
+    pub refractive_index: f64,
+}
+
+impl Dielectric {
+    pub fn scatter(&self, ray: Ray, record: HitRecord, rng: &mut ThreadRng) -> Option<Scatter> {
+        let reflected = reflect(ray.direction, record.normal);
+        let attenuation = Vector::ones();
+
+        let (outward_normal, ni_over_nt, cosine) = if ray.direction.dot(record.normal) > 0.0 {
+            (
+                -record.normal,
+                self.refractive_index,
+                self.refractive_index * ray.direction.dot(record.normal) / ray.direction.length(),
+            )
+        } else {
+            (
+                record.normal,
+                1.0 / self.refractive_index,
+                -ray.direction.dot(record.normal) / ray.direction.length(),
+            )
+        };
+
+        let scattered = match refract(ray.direction, outward_normal, ni_over_nt) {
+            Some(refracted) => {
+                if rng.gen::<f64>() < schlick(cosine, self.refractive_index) {
+                    Ray::new(record.p, reflected)
+                } else {
+                    Ray::new(record.p, refracted)
+                }
+            },
+            None => Ray::new(record.p, reflected),
+        };
+
+        Some(Scatter { attenuation, scattered })
+    }
+}
+
+#[derive(Copy, Clone)]
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
+    Dielectric(Dielectric),
 }
 
 impl Material {
@@ -77,10 +135,15 @@ impl Material {
         Material::Metal(Metal { albedo, fuzz })
     }
 
+    pub fn dielectric(refractive_index: f64) -> Material {
+        Material::Dielectric(Dielectric { refractive_index })
+    }
+
     pub fn scatter(&self, ray: Ray, record: HitRecord, rng: &mut ThreadRng) -> Option<Scatter> {
         match self {
             Material::Lambertian(l) => l.scatter(ray, record, rng),
             Material::Metal(m) => m.scatter(ray, record, rng),
+            Material::Dielectric(d) => d.scatter(ray, record, rng),
         }
     }
 }

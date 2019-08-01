@@ -71,7 +71,7 @@ fn main() {
         Sphere::new(
             Vector::new(0.0, 0.0, -1.0),
             0.5,
-            Material::lambertian(Vector::new(0.8, 0.3, 0.3))),
+            Material::lambertian(Vector::new(0.1, 0.2, 0.5))),
         Sphere::new(
             Vector::new(0.0, -100.5, -1.0),
             100.0,
@@ -79,11 +79,15 @@ fn main() {
         Sphere::new(
             Vector::new(1.0, 0.0, -1.0),
             0.5,
-            Material::metal(Vector::new(0.8, 0.6, 0.2), 1.0)),
+            Material::metal(Vector::new(0.8, 0.6, 0.2), 0.0)),
         Sphere::new(
             Vector::new(-1.0, 0.0, -1.0),
             0.5,
-            Material::metal(Vector::new(0.8, 0.8, 0.8), 0.3)),
+            Material::dielectric(1.5)),
+        Sphere::new(
+            Vector::new(-1.0, 0.0, -1.0),
+            -0.45,
+            Material::dielectric(1.5)),
     ]);
     let buffer = render(&camera, &world, WIDTH, HEIGHT);
 
