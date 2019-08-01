@@ -62,6 +62,49 @@ fn render(camera: &Camera, world: &World, width: usize, height: usize) -> Vec<u3
     }).collect()
 }
 
+fn random_scene(rng: &mut ThreadRng) -> World {
+    let mut spheres = Vec::with_capacity(500);
+    spheres.push(Sphere::new(
+        Vector::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Material::lambertian(Vector::new(0.5, 0.5, 0.5))
+    ));
+
+    let mut random = || rng.gen::<f64>();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let a = a as f64;
+            let b = b as f64;
+            let choose_mat = random();
+            let center = Vector::new(a + 0.9 * random(), 0.2, b + 0.9 * random());
+            if (center - Vector::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    spheres.push(Sphere::new(
+                        center,
+                        0.2,
+                        Material::lambertian(Vector::new(random() * random(), random() * random(), random() * random()))
+                    ));
+                } else if choose_mat < 0.95 {
+                    spheres.push(Sphere::new(
+                        center,
+                        0.2,
+                        Material::metal(Vector::new(0.5 * (1.0 + random()), 0.5 * (1.0 + random()), 0.5 * (1.0 + random())), 0.5 * random())
+                    ));
+                } else {
+                    spheres.push(Sphere::new(center, 0.2, Material::dielectric(1.5)));
+                }
+            }
+        }
+    }
+
+    spheres.push(Sphere::new(Vector::new(0.0, 1.0, 0.0), 1.0, Material::dielectric(1.5)));
+    spheres.push(Sphere::new(Vector::new(-4.0, 1.0, 0.0), 1.0, Material::lambertian(Vector::new(0.4, 0.2, 0.1))));
+    spheres.push(Sphere::new(Vector::new(4.0, 1.0, 0.0), 1.0, Material::metal(Vector::new(0.7, 0.6, 0.5), 0.0)));
+
+    World::new(spheres)
+}
+
 fn main() {
     let mut window = Window::new("Raytracer", WIDTH, HEIGHT, WindowOptions::default())
         .unwrap_or_else(|e| panic!("{}", e));
