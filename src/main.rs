@@ -48,7 +48,7 @@ fn render(camera: &Camera, world: &World, width: usize, height: usize) -> Vec<u3
                 (x as f64 + rng.gen::<f64>()) / width as f64,
                 (y as f64 + rng.gen::<f64>()) / height as f64
             );
-            let ray = camera.get_ray(u, v);
+            let ray = camera.get_ray(u, v, &mut rng);
             col += color(ray, world, 0, &mut rng);
         }
         let col = col / SAMPLES as f64;
@@ -66,7 +66,20 @@ fn main() {
     let mut window = Window::new("Raytracer", WIDTH, HEIGHT, WindowOptions::default())
         .unwrap_or_else(|e| panic!("{}", e));
     
-    let camera = Camera::default();
+    let lookfrom = Vector::new(3.0, 3.0, 2.0);
+    let lookat = Vector::new(0.0, 0.0, -1.0);
+    let dist_to_focus = (lookfrom - lookat).length();
+    let aperture = 2.0;
+
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        Vector::new(0.0, 1.0, 0.0),
+        20.0,
+        WIDTH as f64 / HEIGHT as f64,
+        aperture,
+        dist_to_focus
+    );
     let world = World::new(vec![
         Sphere::new(
             Vector::new(0.0, 0.0, -1.0),
